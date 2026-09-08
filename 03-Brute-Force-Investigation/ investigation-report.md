@@ -15,7 +15,7 @@ not establish an unauthorized compromise.
 Determine whether the observed failures and success were related,
 identify the failure reason, and distinguish suspicious patterns
 from confirmed malicious activity.
-
+ 
 ## Evidence Reviewed
 
 - Command output showing three runas authentication errors
