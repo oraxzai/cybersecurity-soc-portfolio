@@ -71,6 +71,24 @@ prove a security incident.
 - Connecting PowerShell process creation to script-block records.
 - Building timelines and writing investigation reports.
 
+## Lab Setup Evidence
+
+### VMware Network Configuration
+
+The Windows VM uses bridged networking.
+
+![VMware bridged network settings](screenshots/01-vmware-network-settings.png)
+
+### Windows VM Details
+
+Command output confirms:
+
+- Hostname: DESKTOP-C70T8EA
+- Current account: desktop-c70t8ea\healisu
+- Windows version: 10.0.19045.2006
+
+![Windows VM identity and version](screenshots/02-windows-vm-details.png)
+
 ## Related Projects
 
 - [Windows Event Log Investigation](../02-Windows-Event-Logs/)
