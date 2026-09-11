@@ -17,7 +17,7 @@ This is a learning environment. It does not represent a production SOC.
 | Windows hostname | DESKTOP-C70T8EA |
 | Investigation tool | Windows Event Viewer |
 | Lab accounts | Healisu and soclab |
-| Network mode | To be verified |
+| Network mode | Bridged networking |
 
 ## Lab Architecture
 
