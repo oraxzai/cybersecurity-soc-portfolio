@@ -131,7 +131,8 @@ Supporting screenshots are in the [screenshots folder](screenshots/).
 ## Lessons Learned
 
 1. Build a timeline from actual timestamps, with the timezone labeled.
-2. Avoid counting the same Event Record ID twice.
+2. Avoid counting duplicate copies of the same event. Identify records
+   using the host, log channel, and Event Record ID together.
 3. Distinguish the requesting account from the target account.
 4. Correlate multiple fields rather than relying on timing alone.
 5. Separate observed facts, possible explanations, and conclusions.
