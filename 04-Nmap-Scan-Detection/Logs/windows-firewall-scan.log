@@ -1,0 +1,13 @@
+#Version: 1.5
+#Software: Microsoft Windows Firewall
+#Time Format: Local
+#Fields: date time action protocol src-ip dst-ip src-port dst-port size tcpflags tcpsyn tcpack tcpwin icmptype icmpcode info path
+
+                                                                                                                                                                                                                2026-09-13 13:57:24 DROP TCP 172.16.152.128 172.16.152.129 37466 139 60 S 846964568 0 64240 - - - RECEIVE
+2026-09-13 13:57:24 DROP TCP 172.16.152.128 172.16.152.129 43454 445 60 S 3884014009 0 64240 - - - RECEIVE
+2026-09-13 13:57:24 DROP TCP 172.16.152.128 172.16.152.129 48108 135 60 S 3128811533 0 64240 - - - RECEIVE
+2026-09-13 13:57:25 DROP TCP 172.16.152.128 172.16.152.129 48108 135 60 S 3128811533 0 64240 - - - RECEIVE
+2026-09-13 13:57:25 DROP TCP 172.16.152.128 172.16.152.129 43454 445 60 S 3884014009 0 64240 - - - RECEIVE
+2026-09-13 13:57:26 DROP TCP 172.16.152.128 172.16.152.129 53060 135 60 S 1000964178 0 64240 - - - RECEIVE
+2026-09-13 13:57:26 DROP TCP 172.16.152.128 172.16.152.129 46800 445 60 S 30250191 0 64240 - - - RECEIVE
+2026-09-13 13:57:26 DROP TCP 172.16.152.128 172.16.152.129 38394 139 60 S 3655467720 0 64240 - - - RECEIVE

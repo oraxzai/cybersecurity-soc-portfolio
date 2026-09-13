@@ -1,0 +1,11 @@
+# Nmap 7.94 scan initiated Sun Sep 13 08:57:24 2026 as: nmap -sT -Pn -n -p 135,139,445,3389 -oN lab-scan-firewall-check.txt 172.16.152.129
+Nmap scan report for 172.16.152.129
+Host is up.
+
+PORT     STATE    SERVICE
+135/tcp  filtered msrpc
+139/tcp  filtered netbios-ssn
+445/tcp  filtered microsoft-ds
+3389/tcp filtered ms-wbt-server
+
+# Nmap done at Sun Sep 13 08:57:27 2026 -- 1 IP address (1 host up) scanned in 3.30 seconds
