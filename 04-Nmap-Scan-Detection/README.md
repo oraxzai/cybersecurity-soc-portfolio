@@ -165,8 +165,8 @@ A scanning pattern alone does not establish malicious intent.
 
 ## Original Evidence
 
-- [Nmap output](logs/lab-scan.txt)
-- [Packet capture — open with Wireshark](logs/01-windows-port-scan.pcapng)
+- [Nmap output](Logs/lab-scan.txt)
+- [Packet capture — open with Wireshark](Logs/01-windows-port-scan.pcapng)
 
 ## Screenshots
 
