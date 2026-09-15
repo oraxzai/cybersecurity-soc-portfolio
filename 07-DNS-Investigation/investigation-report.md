@@ -338,8 +338,9 @@ be considered before deciding how to respond.
 ### Limitations
 
 - This was historical source review, not live malware analysis.
-- Current domain ownership, DNS resolution, and reputation
-  were not assessed.
+- A separate September 15, 2026 lookup and provider-range review
+  are documented below. Historical IP mappings, domain ownership,
+  and current reputation were not established.
 - No associated IP address was investigated.
 - No evidence reviewed established this domain's presence
   in our local lab captures.
@@ -348,6 +349,49 @@ be considered before deciding how to respond.
 ### Evidence
 
 [Published report and domain context](screenshots/11-threat-intelligence-domain-context.png)
+
+## Domain Resolution and IP Network Context
+
+### Lookup
+
+On September 15, 2026, at 09:58:14 UTC, a DNS lookup from the
+Mac queried:
+
+`www[.]iuqerfsodp9ifjaposdfjhgosurijfaewrwergwea[.]com`
+
+The resolver at 192.168.1.1 returned:
+
+- 104.16.166.228
+- 104.16.167.228
+
+These were results observed at the time of this lookup.
+They do not establish the domain's addresses during the 2017
+WannaCry campaign.
+
+### Network Context
+
+Both addresses fall within 104.16.0.0/13, which appears in
+[Cloudflare's official IPv4 range list](https://www.cloudflare.com/ips-v4/).
+
+This verifies membership in a provider-published range.
+A registry lookup was not completed.
+
+### Interpretation
+
+The DNS results and published range identify Cloudflare network
+context. They do not identify the domain's operator, an origin
+server, or the person responsible for any activity.
+
+Neither a malware-related historical domain nor a provider's
+IP range should be classified as currently malicious solely
+from this evidence.
+
+No current maliciousness verdict was established.
+
+### Evidence
+
+- [Timestamped DNS lookup](screenshots/12-domain-dns-resolution.png)
+- [Cloudflare's published range](screenshots/13-ip-network-context.png)
 
 ## Assessment
 
@@ -383,6 +427,9 @@ The failed attempt was not counted as part of the six-name test.
 - The selected DNS activity did not establish subsequent connections.
 - Server log evidence was limited to a screenshot.
 - Packet numbers belong to their respective capture files.
+- - External research covered a historical Mandiant report,
+  a timestamped DNS lookup, and Cloudflare's published IP ranges.
+  No registry lookup or current reputation verdict was completed.
 
 ## Useful Wireshark Display Filters
 
