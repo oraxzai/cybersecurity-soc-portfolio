@@ -427,7 +427,7 @@ The failed attempt was not counted as part of the six-name test.
 - The selected DNS activity did not establish subsequent connections.
 - Server log evidence was limited to a screenshot.
 - Packet numbers belong to their respective capture files.
-- - External research covered a historical Mandiant report,
+- External research covered a historical Mandiant report,
   a timestamped DNS lookup, and Cloudflare's published IP ranges.
   No registry lookup or current reputation verdict was completed.
 
