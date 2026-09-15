@@ -288,6 +288,67 @@ during this exercise.
 Wireshark alone did not identify the Windows process.
 The PowerShell and nslookup activity was known from the lab commands.
 
+## Historical Threat-Intelligence Review
+
+### Purpose
+
+Use published research to understand a domain's reported role,
+rather than classify it solely by its appearance or association
+with malware.
+
+This review was separate from the local DNS exercises.
+
+### Source
+
+[Mandiant: WannaCry Ransomware Campaign — Threat Details and Risk Management](https://cloud.google.com/blog/topics/threat-intelligence/wannacry-ransomware-campaign/)
+
+- Original publication date: May 15, 2017.
+- Section reviewed: Malware Characteristics.
+- Review date: September 15, 2026.
+
+### Domain Reviewed
+
+Defanged notation:
+
+`www[.]iuqerfsodp9ifjaposdfjhgosurijfaewrwergwea[.]com`
+
+The brackets prevent the indicator from being presented as a
+normal clickable domain.
+
+### Published Finding
+
+Mandiant described the domain as a kill-switch check used by
+a WannaCry variant.
+
+In the testing described in the report, successful contact
+prevented that variant from performing encryption and
+self-propagation. The report also noted differing observations
+about propagation from other organizations.
+
+The domain's reported role was not a malware-download location.
+
+### Interpretation
+
+An association with malware does not, by itself, establish
+a domain's function or justify blocking it.
+
+The role, reporting date, and relevant malware variant must
+be considered before deciding how to respond.
+
+### Limitations
+
+- This was historical source review, not live malware analysis.
+- Current domain ownership, DNS resolution, and reputation
+  were not assessed.
+- No associated IP address was investigated.
+- No evidence reviewed established this domain's presence
+  in our local lab captures.
+- The finding should not be generalized to every WannaCry variant.
+
+### Evidence
+
+[Published report and domain context](screenshots/11-threat-intelligence-domain-context.png)
+
 ## Assessment
 
 Classification: Authorized DNS lab activity.
