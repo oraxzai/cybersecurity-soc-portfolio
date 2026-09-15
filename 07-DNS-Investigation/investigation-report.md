@@ -377,7 +377,8 @@ The failed attempt was not counted as part of the six-name test.
 - Only six names were used in the repeated-query test.
 - No production traffic or actual malware was investigated.
 - No independent endpoint DNS-to-process correlation was performed.
-- No external threat-intelligence assessment was performed.
+- External research was limited to one historical Mandiant report;
+  no current domain reputation or associated IP assessment was performed.
 - No automated alert or detection rule was created.
 - The selected DNS activity did not establish subsequent connections.
 - Server log evidence was limited to a screenshot.
