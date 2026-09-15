@@ -60,15 +60,27 @@ and DNS server log evidence.
 
 ## Scope and Limitations
 
-This project demonstrates a manual investigation of controlled DNS
-activity, not a production malware investigation.
+This project combines controlled DNS lab exercises with external
+source research. It is not a production malware investigation.
 
-No automated detection, independent endpoint process attribution,
-or external threat-intelligence assessment was performed.
-
-The lab names and addresses are investigation details, not confirmed
-malicious indicators.
-
+- The local tests used deliberately configured and missing DNS names.
+- The repeated-query test contained six distinct names.
+- No malware, DNS tunneling, or command-and-control activity was confirmed.
+- No automated detection rule or independent endpoint process
+  attribution was implemented.
+- External research covered a historical Mandiant report, a
+  timestamped DNS lookup, and Cloudflare's published IP ranges.
+- The September 15, 2026 DNS results do not establish the domain's
+  IP addresses during the 2017 WannaCry campaign.
+- Provider-range membership does not identify the domain operator,
+  origin server, or responsible person.
+- No registry lookup, domain ownership verification, or current
+  reputation verdict was completed.
+- The historical research example was separate from the local
+  NXDOMAIN captures.
+- The reviewed names and addresses were not established as
+  currently malicious indicators.
+  
 ## Related Projects
 
 - [Wireshark Network Investigations](../05-Wireshark-Investigations/)
