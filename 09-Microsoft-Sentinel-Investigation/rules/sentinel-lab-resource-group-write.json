@@ -1,0 +1,56 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/ac0b5715-dd66-4a58-9bce-39db1e86acc7')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/ac0b5715-dd66-4a58-9bce-39db1e86acc7')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "apiVersion": "2023-12-01-preview",
+            "properties": {
+                "displayName": "SOC-LAB - Test Resource Group Write",
+                "description": "Detects successful write operations on rg-soc-detection-test. Created to validate Sentinel alert and incident generation using authorized lab activity.",
+                "severity": "Informational",
+                "enabled": false,
+                "query": "AzureActivity\n| where OperationNameValue =~ \"Microsoft.Resources/subscriptions/resourceGroups/write\"\n| where ResourceGroup =~ \"rg-soc-detection-test\"\n| where ActivityStatusValue =~ \"Success\"\n| project TimeGenerated, Caller, CallerIpAddress,\n          ResourceGroup, ResourceId, CorrelationId, OperationNameValue",
+                "queryFrequency": "PT5M",
+                "queryPeriod": "PT1H",
+                "triggerOperator": "GreaterThan",
+                "triggerThreshold": 0,
+                "suppressionDuration": "PT1H",
+                "suppressionEnabled": true,
+                "startTimeUtc": null,
+                "tactics": [],
+                "techniques": [],
+                "subTechniques": [],
+                "alertRuleTemplateName": null,
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": false,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "PT5H",
+                        "matchingMethod": "AllEntities",
+                        "groupByEntities": [],
+                        "groupByAlertDetails": [],
+                        "groupByCustomDetails": []
+                    }
+                },
+                "eventGroupingSettings": {
+                    "aggregationKind": "SingleAlert"
+                },
+                "alertDetailsOverride": null,
+                "customDetails": null,
+                "entityMappings": null,
+                "sentinelEntitiesMappings": null,
+                "templateVersion": null
+            }
+        }
+    ]
+}
