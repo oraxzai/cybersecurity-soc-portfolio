@@ -1,0 +1,33 @@
+From: "IT Support" <helpdesk@company-support.test>
+To: Employee <employee@company.test>
+Reply-To: account-review@external-mail.test
+Date: Wed, 16 Sep 2026 10:00:00 +0000
+Message-ID: <training-001@company-support.test>
+Subject: Urgent: Your mailbox will be disabled in 30 minutes
+MIME-Version: 1.0
+X-Training-Sample: Synthetic SOC portfolio exercise
+Content-Type: multipart/mixed; boundary="SOC-LAB-BOUNDARY"
+
+--SOC-LAB-BOUNDARY
+Content-Type: text/html; charset=UTF-8
+
+<html>
+<body>
+<p>Your mailbox has exceeded its storage limit.</p>
+<p>You must verify your account within 30 minutes to avoid losing access.</p>
+<p><a href="https://account-review.test/verify">https://mail.company.test</a></p>
+<p>Enter your work email and password to complete verification.</p>
+<p>See the attached instructions. Do not contact the help desk because this will delay verification.</p>
+<p>IT Support</p>
+</body>
+</html>
+
+--SOC-LAB-BOUNDARY
+Content-Type: text/plain; charset=UTF-8
+Content-Disposition: attachment; filename="verification-instructions.txt"
+
+SYNTHETIC TRAINING ATTACHMENT.
+This is a harmless text file created for a SOC portfolio exercise.
+No real credentials should be entered or collected.
+
+--SOC-LAB-BOUNDARY--
