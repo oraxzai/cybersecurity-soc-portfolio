@@ -5,5 +5,5 @@
 SecurityEvent
 | where TimeGenerated > ago(2d)
 | where EventID == 4625
-| summarize FailedLogins = count() by Account, bin(TimeGenerated, 10m)
+| summarize FailedLogins = count() by Computer, Account, bin(TimeGenerated, 10m)
 | where FailedLogins >= 5
