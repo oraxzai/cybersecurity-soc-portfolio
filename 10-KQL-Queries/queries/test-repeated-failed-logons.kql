@@ -21,6 +21,10 @@ datatable(
     datetime(2026-09-20T10:15:00Z), "PC-C", "LabUser", 4625
 ]
 | where EventID == 4625
-| summarize FailedLogins = count()
+| summarize
+    FailedLogins = count(),
+    FirstSeen = min(TimeGenerated),
+    LastSeen = max(TimeGenerated)
     by Computer, Account, bin(TimeGenerated, 10m)
+| extend FailureSpan = LastSeen - FirstSeen    
 | where FailedLogins >= 5
