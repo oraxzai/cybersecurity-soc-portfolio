@@ -12,12 +12,21 @@ records in a fixed 10-minute window during the last two days?
 ### Query
 
 ```kusto
+// Find at least 5 failed-logon records per computer, account,
+// and fixed 10-minute window during the last two days.
+// Matches require investigation; they do not prove an attack.
+// Fixed windows can split related failures across boundaries.
 SecurityEvent
 | where TimeGenerated > ago(2d)
 | where EventID == 4625
-| summarize FailedLogins = count()
+| summarize
+    FailedLogins = count(),
+    FirstSeen = min(TimeGenerated),
+    LastSeen = max(TimeGenerated)
     by Computer, Account, bin(TimeGenerated, 10m)
 | where FailedLogins >= 5
+| extend FailureSpan = LastSeen - FirstSeen
+| order by FailedLogins desc
 ```
 
 ### How It Works
@@ -125,6 +134,21 @@ though all five failures might occur within a short period.
 
 Fixed windows are not the same as checking every possible rolling
 10-minute interval.
+
+## Timing Enhancement and Validation
+
+The query now includes:
+
+- FirstSeen: earliest event in each group.
+- LastSeen: latest event in each group.
+- FailureSpan: LastSeen minus FirstSeen.
+
+The synthetic test returned PC-C / LabUser with five failures,
+FirstSeen 10:11 UTC, LastSeen 10:15 UTC, and FailureSpan 00:04:00.
+
+The updated real-data query returned no matching groups during
+validation. No group met the threshold of five failures within
+a fixed 10-minute window.
 
 ## Lessons Learned
 
