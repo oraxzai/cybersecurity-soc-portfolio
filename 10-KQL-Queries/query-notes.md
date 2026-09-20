@@ -87,9 +87,13 @@ September 20, 2026, from 10:10 UTC up to, but not including, 10:20 UTC.
 PC-A and PC-B should be excluded because each has fewer than five
 failures. Their counts must not be combined.
 
-This describes the expected result. Record the actual output after
-running the revised test before marking it as passed.
+### Actual Result
 
+The query returned exactly one row: PC-C, LabUser,
+2026-09-20 10:10:00 UTC, FailedLogins = 5.
+
+Test passed: the group at the threshold was included, and the
+below-threshold groups on separate computers were excluded.
 ### Synthetic Data Handling
 
 `datatable` supplies temporary records for the query. It does not
