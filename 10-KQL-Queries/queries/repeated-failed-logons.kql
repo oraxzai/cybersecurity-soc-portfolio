@@ -1,9 +1,15 @@
-// Find accounts with at least 5 failed logons per fixed 10-minute window.
-// No results means no group met the threshold.
-// Matching results require investigation; they do not prove an attack.
+// Find at least 5 failed-logon records per computer, account,
+// and fixed 10-minute window during the last two days.
+// Matches require investigation; they do not prove an attack.
 // Fixed windows can split related failures across boundaries.
 SecurityEvent
 | where TimeGenerated > ago(2d)
 | where EventID == 4625
-| summarize FailedLogins = count() by Computer, Account, bin(TimeGenerated, 10m)
+| summarize
+    FailedLogins = count(),
+    FirstSeen = min(TimeGenerated),
+    LastSeen = max(TimeGenerated)
+    by Computer, Account, bin(TimeGenerated, 10m)
 | where FailedLogins >= 5
+| extend FailureSpan = LastSeen - FirstSeen
+| order by FailedLogins desc
