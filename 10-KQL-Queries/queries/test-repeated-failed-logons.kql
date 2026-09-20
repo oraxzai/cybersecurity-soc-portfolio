@@ -1,15 +1,26 @@
-// Synthetic test data; this does not write events to stored logs.
-// Expected result: LabUser, 2026-09-20 10:10:00 UTC, FailedLogins = 5.
-// OtherUser is excluded because it has only one failure.
-datatable(TimeGenerated:datetime, Account:string, EventID:int)
+// Synthetic data: all events fall in the same 10-minute window.
+// Expected result: PC-C, LabUser, 10:10 UTC, FailedLogins = 5.
+// PC-A and PC-B each have 3 failures and must remain separate.
+datatable(
+    TimeGenerated:datetime,
+    Computer:string,
+    Account:string,
+    EventID:int
+)
 [
-    datetime(2026-09-20T10:11:00Z), "LabUser", 4625,
-    datetime(2026-09-20T10:12:00Z), "LabUser", 4625,
-    datetime(2026-09-20T10:13:00Z), "LabUser", 4625,
-    datetime(2026-09-20T10:14:00Z), "LabUser", 4625,
-    datetime(2026-09-20T10:15:00Z), "LabUser", 4625,
-    datetime(2026-09-20T10:16:00Z), "OtherUser", 4625
+    datetime(2026-09-20T10:11:00Z), "PC-A", "LabUser", 4625,
+    datetime(2026-09-20T10:12:00Z), "PC-A", "LabUser", 4625,
+    datetime(2026-09-20T10:13:00Z), "PC-A", "LabUser", 4625,
+    datetime(2026-09-20T10:11:00Z), "PC-B", "LabUser", 4625,
+    datetime(2026-09-20T10:12:00Z), "PC-B", "LabUser", 4625,
+    datetime(2026-09-20T10:13:00Z), "PC-B", "LabUser", 4625,
+    datetime(2026-09-20T10:11:00Z), "PC-C", "LabUser", 4625,
+    datetime(2026-09-20T10:12:00Z), "PC-C", "LabUser", 4625,
+    datetime(2026-09-20T10:13:00Z), "PC-C", "LabUser", 4625,
+    datetime(2026-09-20T10:14:00Z), "PC-C", "LabUser", 4625,
+    datetime(2026-09-20T10:15:00Z), "PC-C", "LabUser", 4625
 ]
 | where EventID == 4625
-| summarize FailedLogins = count() by Account, bin(TimeGenerated, 10m)
+| summarize FailedLogins = count()
+    by Computer, Account, bin(TimeGenerated, 10m)
 | where FailedLogins >= 5
