@@ -4,10 +4,21 @@
 
 Query: [repeated-failed-logons.kql](queries/repeated-failed-logons.kql)
 
-### Question
+### Investigation Question
 
-Which accounts have at least five failed-logon records in a fixed
-10-minute window during the last two days?
+Which computer-and-account combinations have at least five failed-logon
+records in a fixed 10-minute window during the last two days?
+
+### Query
+
+```kusto
+SecurityEvent
+| where TimeGenerated > ago(2d)
+| where EventID == 4625
+| summarize FailedLogins = count()
+    by Computer, Account, bin(TimeGenerated, 10m)
+| where FailedLogins >= 5
+```
 
 ### How It Works
 
@@ -15,44 +26,144 @@ Which accounts have at least five failed-logon records in a fixed
 |---|---|
 | `SecurityEvent` | Read Windows Security records |
 | `where TimeGenerated > ago(2d)` | Keep records from the last two days |
-| `where EventID == 4625` | Keep failed logons |
-| `count() by Account, bin(TimeGenerated, 10m)` | Count records for each account and fixed 10-minute window |
+| `where EventID == 4625` | Keep failed-logon records |
+| `count()` | Count the records in each group |
+| `by Computer, Account, bin(TimeGenerated, 10m)` | Create separate groups for each computer, account, and fixed 10-minute window |
 | `where FailedLogins >= 5` | Keep groups containing at least five records |
 
-### Observed Result
+### Real-Data Observation
 
-The real-data query returned no matching groups during this exercise.
-The earlier investigation found one failed-logon record.
+During the initial exercise, the account-and-time-window version of
+the query returned no matching groups. Earlier queries found one
+failed-logon record from the authorized Windows lab test.
 
-No results means no group met the threshold, not that no failures occurred.
+The query was subsequently refined to include Computer in the grouping.
+
+No results means no group met the threshold. It does not mean
+there were no failed logons.
+
+## Why Grouping Matters
+
+The fields after `by` determine which records are counted together.
+
+| Grouping | One Result Row Represents |
+|---|---|
+| `by Account` | One account |
+| `by Account, bin(TimeGenerated, 10m)` | One account in one time window |
+| `by Computer, Account, bin(TimeGenerated, 10m)` | One account on one computer in one time window |
+
+For example, three failures for LabUser on PC-A and three on PC-B
+could be combined into six when grouping only by account and time.
+
+Adding Computer keeps those groups separate. Each has three failures,
+so neither reaches a threshold of five.
 
 ## Synthetic Test
 
 Query: [test-repeated-failed-logons.kql](queries/test-repeated-failed-logons.kql)
 
-The test supplies five failures for LabUser and one for OtherUser
-within the same 10-minute window.
+### Purpose
 
-Expected result: one row for LabUser, window start 10:10 UTC,
-with FailedLogins equal to 5.
+Test whether the query keeps computers separate and includes a group
+that reaches the threshold exactly.
 
-Synthetic records are temporary query input and are not stored logs.
+### Input
+
+All records use Event ID 4625 and fall within the same fixed window:
+September 20, 2026, from 10:10 UTC up to, but not including, 10:20 UTC.
+
+| Computer | Account | Failed-Logon Records |
+|---|---|---:|
+| PC-A | LabUser | 3 |
+| PC-B | LabUser | 3 |
+| PC-C | LabUser | 5 |
+
+### Expected Result
+
+| Computer | Account | Window Start (UTC) | FailedLogins |
+|---|---|---|---:|
+| PC-C | LabUser | 2026-09-20 10:10:00 | 5 |
+
+PC-A and PC-B should be excluded because each has fewer than five
+failures. Their counts must not be combined.
+
+This describes the expected result. Record the actual output after
+running the revised test before marking it as passed.
+
+### Synthetic Data Handling
+
+`datatable` supplies temporary records for the query. It does not
+insert those records into the workspace's stored security logs.
+
+The synthetic test intentionally omits the relative two-day filter
+so its fixed timestamps remain usable when the test is run later.
+It tests event filtering, grouping, and the count threshold.
+
+## Fixed Time Windows
+
+`bin(TimeGenerated, 10m)` groups timestamps into fixed intervals.
+
+For example:
+
+- 10:10:00 up to, but not including, 10:20:00.
+- 10:20:00 up to, but not including, 10:30:00.
+
+An event at 10:16 belongs to the window labelled 10:10.
+The original stored event timestamp is not changed.
+
+### Boundary Limitation
+
+Closely spaced failures can fall on opposite sides of a window boundary.
+
+For example, three failures just before 10:20 and two just after 10:20
+form separate groups of three and two. Neither reaches five, even
+though all five failures might occur within a short period.
+
+Fixed windows are not the same as checking every possible rolling
+10-minute interval.
 
 ## Lessons Learned
 
 - `where` filters rows.
 - `project` selects columns.
+- `extend` adds calculated columns to query results.
+- `iff` selects a value based on a condition.
 - `summarize` groups records and calculates results.
-- Grouping by account and time window can produce several rows
-  for the same account.
+- `count()` counts records within each group.
+- Adding grouping fields can create more result rows.
 - `where` after `summarize` filters calculated groups.
 - `==` compares values; `=` names a calculated column.
 - `asc` sorts ascending; `desc` sorts descending.
+- `bin` groups timestamps into fixed intervals.
+- One result row can represent multiple source events.
+- No results after a threshold filter does not mean no events occurred.
+
+## Investigation Context
+
+The original Windows lab test produced:
+
+- One failed interactive logon for Healisu.
+- Two distinct successful-logon records approximately nine seconds later.
+- Different event record IDs and target logon IDs for the two successes.
+
+The records were consistent with the known incorrect-password test
+followed by a successful sign-in. The available fields did not establish
+why Windows created two successful logon sessions.
+
+Matching timestamps alone are not sufficient to identify duplicate events.
 
 ## Limitations
 
 - Repeated failures do not prove an attack.
+- Five failures is an illustrative lab threshold, not a validated
+  production threshold.
 - Fixed windows can split related failures across boundaries.
 - Counts represent event records, not necessarily distinct human actions.
-- Grouping only by Account and time can combine activity across computers.
-- This is a saved search, not an enabled analytics rule.
+- Grouping by computer keeps host activity separate, but this query
+  does not detect attempts distributed across multiple computers.
+- The query does not distinguish source IP addresses within each group.
+- Missing or delayed logs can affect the results.
+- The two-day time filter moves with the query execution time.
+- These saved queries do not create or enable an automatic analytics rule.
+- Synthetic tests validate selected logic; they do not establish
+  production detection coverage.
