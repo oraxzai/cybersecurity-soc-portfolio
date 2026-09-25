@@ -5,7 +5,7 @@
 Practise Kusto Query Language (KQL) for Windows authentication
 investigations in Microsoft Sentinel and Azure Log Analytics.
 
-Exercises use both collected Windows Security events and synthetic
+The exercises use collected Windows Security events and synthetic
 datasets. Synthetic results validate query logic; they do not represent
 actual activity on the lab computer.
 
@@ -16,7 +16,7 @@ actual activity on the lab computer.
 - Windows computer: `DESKTOP-C70T8EA`
 - Collection: Azure Monitor Agent on an Azure Arc-connected machine
 - Query interface: Log Analytics
-- Status: In progress
+- Status: Completed
 
 ## 1. Windows Authentication Events
 
@@ -24,8 +24,6 @@ actual activity on the lab computer.
 |---|---|
 | 4624 | Successful logon |
 | 4625 | Failed logon |
-
-The following logon types were observed:
 
 | Logon type | Meaning |
 |---|---|
@@ -35,7 +33,7 @@ The following logon types were observed:
 A successful service logon does not necessarily represent a person
 signing in.
 
-## 2. Basic Filtering and Selecting Columns
+## 2. Basic Filtering
 
 ```kusto
 SecurityEvent
@@ -46,15 +44,12 @@ SecurityEvent
 ```
 
 - `where` filters rows.
-- `ago(2d)` selects a relative time boundary two days before execution.
-- `in` matches any listed value.
-- `project` selects the output columns.
-- `order by ... desc` places the latest timestamps first.
-- `order by ... asc` places the earliest timestamps first.
+- `project` selects columns.
+- `ago(2d)` selects the previous two days.
+- `in` matches multiple values.
+- `order by` sorts the results.
 
-Results from relative time ranges change as time passes.
-
-## 3. Counting Events by Account and Outcome
+## 3. Count Events by Account and Outcome
 
 ```kusto
 SecurityEvent
@@ -65,41 +60,27 @@ SecurityEvent
 | order by TotalEvents desc
 ```
 
-`extend` adds a calculated column. Here, `iff` labels each selected event
-as either Success or Failure.
+Observed counts during the lab:
 
-`summarize` returns one row for each distinct Account and Outcome
-combination.
-
-The following counts were observed during the earlier lab query:
-
-| Account | Outcome | TotalEvents |
-|---|---|---|
+| Account | Outcome | Total events |
+|---|---|---:|
 | NT AUTHORITY\SYSTEM | Success | 30 |
 | DESKTOP-C70T8EA\Healisu | Success | 2 |
 | DESKTOP-C70T8EA\Healisu | Failure | 1 |
 
-These were counts from that query's time range, not permanent totals.
+These are counts for the selected query period, not permanent totals.
 
-To display counts from smallest to largest, use:
+## 4. Inspect Apparently Duplicate Events
 
-```kusto
-| order by TotalEvents asc
-```
-
-Sorting by `Account` sorts account names rather than event counts.
-
-## 4. Checking Apparently Duplicate Events
-
-Two successful logon events appeared at almost the same time.
+Two successful events appeared almost simultaneously:
 
 | Event ID | EventRecordId | TargetLogonId |
-|---|---|---|
+|---|---:|---|
 | 4624 | 27835 | 0x226b347 |
 | 4624 | 27836 | 0x226b372 |
 
-The different event record IDs and logon IDs supported treating them as
-distinct recorded events rather than assuming duplicate ingestion.
+Because the record IDs and logon IDs differ, they should be treated as
+distinct Windows events. They are not automatically duplicate ingestion.
 
 Both events showed:
 
@@ -108,11 +89,9 @@ Both events showed:
 - Authentication package: `Negotiate`
 - Process: `C:\Windows\System32\svchost.exe`
 
-These fields alone did not establish why Windows created both logon
-sessions. Two events also do not necessarily mean two separate manual
-sign-in attempts.
+These fields do not by themselves explain why two sessions were created.
 
-## 5. Counting Failures Within Fixed Time Bins
+## 5. Count Failed Logons in Fixed Time Bins
 
 ```kusto
 SecurityEvent
@@ -123,14 +102,13 @@ SecurityEvent
 | where FailedLogins >= 5
 ```
 
-This query:
+This query groups failures by:
 
-1. Selects failed logons.
-2. Groups them by computer, account, and fixed 10-minute time bin.
-3. Counts the events in each group.
-4. Returns groups containing at least five failures.
+- Computer
+- Account
+- Fixed 10-minute time bin
 
-The output name must be consistent:
+The output name must remain consistent:
 
 ```kusto
 FailedLogins = count()
@@ -142,35 +120,12 @@ must be referenced as:
 | where FailedLogins >= 5
 ```
 
-`FailedLogin` and `FailedLogins` are different column names.
+A result may be empty if no computer/account group reached five failures
+inside one fixed 10-minute bin.
 
-### Grouping Matters
+Events from different computers are not combined.
 
-Failures on different computers remain separate even when the account
-name is the same.
-
-For example:
-
-- PC-A / LabUser: 3 failures
-- PC-B / LabUser: 3 failures
-
-Neither group reaches five failures. The query does not combine them
-into a count of six.
-
-### Time-Bin Boundaries
-
-A 10-minute bin beginning at 10:10 includes:
-
-- 10:10:00
-- Times after 10:10 and before 10:20
-
-An event at exactly 10:20 belongs to the next bin.
-
-A fixed-bin query does not evaluate every possible rolling 10-minute
-interval. Failures split across a boundary can fall below the threshold
-in both bins.
-
-## 6. Adding First Seen, Last Seen, and Failure Span
+## 6. Add First Seen, Last Seen, and Failure Span
 
 ```kusto
 SecurityEvent
@@ -188,48 +143,74 @@ SecurityEvent
 
 | Field | Meaning |
 |---|---|
-| FailedLogins | Number of failures in the group |
-| FirstSeen | Earliest failure timestamp |
-| LastSeen | Latest failure timestamp |
-| FailureSpan | Time between the first and last failure |
-| TimeGenerated | Start of the fixed time bin after aggregation |
+| `FailedLogins` | Number of failures in the group |
+| `FirstSeen` | Earliest failure |
+| `LastSeen` | Latest failure |
+| `FailureSpan` | Difference between first and last failure |
+| `bin(TimeGenerated, 10m)` | Start of the fixed time window |
 
-`min(TimeGenerated)` returns the earliest timestamp.
+`min(TimeGenerated)` returns the first event.
 
-`max(TimeGenerated)` returns the latest timestamp.
-
-`FailureSpan` describes the observed events' span. It is not necessarily
-equal to the full 10-minute bin duration.
+`max(TimeGenerated)` returns the last event.
 
 ### Synthetic Validation
 
-The synthetic dataset produced this qualifying result:
+A synthetic test produced:
 
-| Computer | Account | Bin start UTC | Failures | FirstSeen UTC | LastSeen UTC | FailureSpan |
-|---|---|---|---|---|---|---|
-| PC-C | LabUser | 2026-09-20 10:10 | 5 | 2026-09-20 10:11 | 2026-09-20 10:15 | 00:04:00 |
+| Computer | Account | Bin start | Failed logins | First seen | Last seen | Failure span |
+|---|---|---|---:|---|---|---|
+| PC-C | LabUser | 2026-09-20 10:10 UTC | 5 | 10:11 | 10:15 | 00:04:00 |
 
-PC-A and PC-B each had three failures and did not meet the threshold.
+PC-A and PC-B each had three failures and therefore did not meet the
+threshold of five.
 
-### Stored-Log Result
+## 7. Failure Followed by Successful Logon
 
-The threshold query returned no matching rows during testing against
-the stored Windows events.
+The following query matches a failed logon with a later successful logon
+for the same computer and account:
 
-This means no group met all the query conditions within the selected
-time range. It does not mean there were no Windows events or that the
-query failed.
+```kusto
+(
+    SecurityEvent
+    | where TimeGenerated > ago(7d)
+    | where EventID == 4625
+    | summarize LastFailure = max(TimeGenerated)
+        by Computer, Account
+)
+| join kind=inner
+(
+    SecurityEvent
+    | where TimeGenerated > ago(7d)
+    | where EventID == 4624
+    | project Computer,
+              Account,
+              SuccessTime = TimeGenerated,
+              SuccessEventRecordId = EventRecordId
+)
+on Computer, Account
+| where SuccessTime > LastFailure
+| extend TimeToSuccess = SuccessTime - LastFailure
+| where TimeToSuccess <= 10m
+| project Computer,
+          Account,
+          LastFailure,
+          SuccessTime,
+          TimeToSuccess,
+          SuccessEventRecordId
+| order by LastFailure desc
+```
 
-Earlier inspection found one failed logon in the examined data.
+### Query Logic
 
-## 7. Failed Logon Followed by a Successful Logon
+- The first subquery selects failed events.
+- `max(TimeGenerated)` identifies the last failure.
+- The second subquery selects successful events.
+- `join kind=inner` matches the same Computer and Account.
+- `SuccessTime > LastFailure` confirms the success occurred afterward.
+- `TimeToSuccess` calculates the elapsed time.
+- `TimeToSuccess <= 10m` keeps successes within ten minutes.
 
-### Objective
-
-Match a computer/account pair's last failure with a later success,
-then calculate the elapsed time.
-
-### Complete Synthetic Practice Query
+## 8. Synthetic Failure-to-Success Test
 
 ```kusto
 let Events = datatable(
@@ -258,109 +239,125 @@ Failures
 | project Computer, Account, LastFailure, SuccessTime, TimeToSuccess
 ```
 
-### How the Query Works
+Expected result:
 
-- `let` names a dataset or query expression for reuse.
-- `datatable` creates synthetic rows for testing.
-- `Failures` keeps the latest failure for each computer/account pair.
-- `Successes` selects successful logons and names their timestamp
-  `SuccessTime`.
-- `join kind=inner` retains matching Computer and Account values.
-- `SuccessTime > LastFailure` requires the success to occur afterward.
-- `TimeToSuccess` calculates the elapsed time.
-- `TimeToSuccess <= 10m` keeps gaps of up to and including 10 minutes.
-
-OtherUser is excluded because it has no matching failure, even though
-it has a successful logon on PC-A.
-
-### Verified Initial Result
-
-| Computer | Account | LastFailure UTC | SuccessTime UTC | TimeToSuccess |
+| Computer | Account | Last failure | Success time | Time to success |
 |---|---|---|---|---|
-| PC-A | LabUser | 2026-09-21 10:03 | 2026-09-21 10:05 | 00:02:00 |
+| PC-A | LabUser | 10:03 | 10:05 | 00:02:00 |
 
-The gap is calculated from the last failure at 10:03, not the first
-failure at 10:01.
+OtherUser is excluded because it has no matching failed logon.
 
 ### Boundary Tests
 
-Only LabUser's success timestamp was changed for these tests.
-
-| Last failure UTC | Success UTC | Gap | Result |
-|---|---|---|---|
+| Last failure | Success | Gap | Result |
+|---|---|---:|---|
 | 10:03 | 10:05 | 2 minutes | Included |
-| 10:03 | 10:15 | 12 minutes | Excluded |
 | 10:03 | 10:13 | 10 minutes | Included |
+| 10:03 | 10:15 | 12 minutes | Excluded |
 
-The exactly-10-minute case passes because `<=` includes equality.
+The `<= 10m` condition includes exactly ten minutes.
 
-### Limitations of This Practice Query
+## 9. Real Windows Event Validation
 
-- The data is synthetic and does not create actual Windows logins.
-- The query selects only the latest failure for each computer/account
-  pair across the input dataset.
-- It can therefore miss earlier failure-success sequences when a newer
-  failure exists.
-- Multiple qualifying successes can produce multiple output rows.
-- It does not require a minimum number of failures.
-- It matches computer and account, but does not require matching source
-  addresses or logon types.
-- A time-based association does not prove that the same person caused
-  both events.
-- A success after failures does not establish compromise or brute force.
+Because there were no matching records in the previous two days, the
+real-event query used a seven-day lookback.
 
-This is a learning query, not a production-ready detection rule.
+The query found:
 
-## 8. Investigation Approach
+| Field | Value |
+|---|---|
+| Computer | `DESKTOP-C70T8EA` |
+| Account | `DESKTOP-C70T8EA\Healisu` |
+| Failed event | `4625` |
+| Successful events | `4624` |
+| Success record IDs | `27835`, `27836` |
+| Time to success | Approximately 9 seconds |
+| Logon type | `2` |
+| Source address | `127.0.0.1` |
+| Logon process | `User32` |
+| Authentication package | `Negotiate` |
+| Process | `C:\Windows\System32\svchost.exe` |
+| Status | `0xc000006d` |
+| Substatus | `0xc000006a` |
+| Failure reason | `%%2313` |
 
-For an authentication alert, examine:
+Interpretation:
+
+- `127.0.0.1` is the local loopback address.
+- The authentication was local rather than from a remote IP.
+- `0xc000006d` is a general bad-credentials status.
+- `0xc000006a` is consistent with an incorrect password.
+- `LogonType 2` represents an interactive logon.
+- The failed event was followed by two distinct successful events.
+- The two successful events are distinct because their record IDs differ.
+
+The sequence demonstrates a failed authentication followed shortly by
+successful authentication. It does not, by itself, prove brute force,
+compromise, or malicious activity.
+
+## 10. Investigation Method
+
+For an authentication alert, check:
 
 1. Account and destination computer.
-2. Failure reason, status, and substatus.
-3. Source address and logon type.
-4. Number and timing of failures.
-5. Whether a later success occurred for the same account and computer.
-6. Activity after the success, when supporting logs are available.
-7. Whether the activity matches authorized testing or expected usage.
+2. Event ID and event timestamp.
+3. Failure reason, status, and substatus.
+4. Source address.
+5. Logon type.
+6. Number and timing of failures.
+7. Whether a later success occurred for the same account and computer.
+8. Process and authentication package.
+9. Activity after the successful logon.
+10. Whether the activity was authorized lab testing.
 
-Separate observed facts from assumptions. Document missing evidence
-and avoid classifying an attack from a single indicator.
+Always separate observed facts from assumptions.
 
-## 9. KQL Concepts Practised
+## 11. KQL Concepts Practised
 
 | Concept | Purpose |
 |---|---|
-| where | Filter rows |
-| project | Select or rename columns |
-| extend | Add calculated columns |
-| iff | Choose between values based on a condition |
-| summarize | Aggregate rows into groups |
-| count() | Count events |
-| min() | Find the earliest timestamp |
-| max() | Find the latest timestamp |
-| bin() | Group timestamps into fixed intervals |
-| order by | Sort results |
-| datatable | Build synthetic test data |
-| let | Name reusable expressions |
-| join kind=inner | Match rows between datasets |
+| `where` | Filter records |
+| `project` | Select or rename fields |
+| `extend` | Add calculated fields |
+| `iff()` | Create conditional labels |
+| `summarize` | Aggregate records |
+| `count()` | Count events |
+| `min()` | Find the earliest timestamp |
+| `max()` | Find the latest timestamp |
+| `bin()` | Group timestamps into fixed windows |
+| `order by` | Sort results |
+| `datatable` | Create synthetic test data |
+| `let` | Define reusable query expressions |
+| `join kind=inner` | Match related records |
 | Timestamp subtraction | Calculate elapsed time |
 
-## 10. Current Progress and Next Step
+## 12. Limitations
 
-Completed exercises:
+- A fixed 10-minute bin is not a rolling time window.
+- Events split across bin boundaries may not meet the threshold.
+- The failure-to-success query selects only the latest failure per
+  computer/account pair.
+- Multiple successful events may create multiple result rows.
+- The query does not match source address or logon ID.
+- A successful logon after failures does not prove compromise.
+- `svchost.exe` is a hosting process and does not identify the exact
+  originating service by itself.
+- Synthetic records validate query logic but are not real activity.
+- No result may mean the selected time range or threshold is too strict.
 
-- Filtered and inspected Windows authentication events.
-- Counted successes and failures by account.
-- Checked identifiers on apparently duplicate successful logons.
-- Tested failure thresholds by computer, account, and fixed time bin.
-- Calculated first seen, last seen, and failure span.
-- Matched synthetic failures with later successes.
-- Tested below-limit, exact-boundary, and above-limit time gaps.
+## 13. Project Status
 
-Next step:
+Completed:
 
-Apply failure-to-success correlation to the stored Windows Security
-events and compare the result with the previously inspected timeline.
+- Basic Windows authentication filtering.
+- Success and failure counting.
+- Event ID and logon type analysis.
+- Time-binned failed-logon detection.
+- First-seen, last-seen, and failure-span calculations.
+- Synthetic failure-to-success correlation.
+- Ten-minute boundary testing.
+- Real Windows failure-to-success validation.
+- Interpretation of account, source, reason, destination, and timing.
 
-The join-based query has been validated with synthetic data so far;
-its use against stored Windows events remains to be completed.
+Project 10 KQL investigation is complete. The final remaining action is
+to commit the updated notes, queries, and evidence to the repository.
